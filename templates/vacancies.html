@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-
+{% load to_and %}
+{% load salary_space %}
 {% block container %}
 
   <main class="container mt-3">
@@ -36,13 +37,13 @@
             <div class="card-body px-4">
               <div class="row">
                 <div class="col-12 col-md-8 col-lg-9">
-                  <h2 class="h2 pb-2"><a href="/vacancies/{{ vacancy.id }}/" class="text-dark text-decoration-none">{{ vacancy.title }}</a></h2>
-                  <p class="mb-2">{{ vacancy.vacancy_skills }}</p>
-                  <p>От {{ vacancy.salary_min }} до {{ vacancy.salary_max }} руб.</p>
-                  <p class="text-muted pt-1">{{ vacancy.published_date }}</p>
+                  <h2 class="h2 pb-2"><a href="{% url 'id_vacancy' vacancy.id %}" class="text-dark text-decoration-none">{{ vacancy.title }}</a></h2>
+                  <p class="mb-2">{{ vacancy.skills|to_and }}</p>
+                  <p>От {{ vacancy.salary_min|salary_space }} до {{ vacancy.salary_max|salary_space }} руб.</p>
+                  <p class="text-muted pt-1">{{ vacancy.published_at|date:'d E' }}</p>
                 </div>
                 <div class="col-12 col-md-4 col-lg-3 d-flex align-items-end">
-                  <a href="/companies/{{ vacancy.company_id }}/"><img src="{{ vacancy.company_logo }}" width="130" height="80" alt=""></a>
+                  <a href="{% url 'id_company' vacancy.company.id %}"><img src="{{ vacancy.company.logo.url }}" width="130" height="80" alt=""></a>
                 </div>
               </div>
             </div>

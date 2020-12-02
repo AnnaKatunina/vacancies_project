@@ -1,44 +1,23 @@
-from datetime import datetime
-import locale
-
-from django.http import Http404, HttpResponseNotFound, HttpResponseServerError
+from django.contrib.auth.views import LoginView, LogoutView
+from django.db.models import Count
+from django.http import Http404, HttpResponseNotFound, HttpResponseServerError, HttpResponseRedirect
 from django.shortcuts import render
 from django.views import View
+from django.views.generic import CreateView
 
+from vacancies_app.forms import RegisterUserForm, LoginForm, ApplicationForm
 from vacancies_app.models import Specialty, Company, Vacancy
-
-locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 
 
 class MainView(View):
 
     def get(self, request):
-        specialties = Specialty.objects.all()
-        companies = Company.objects.all()
-
-        list_of_categories = []
-        for specialty in specialties:
-            specialty_dict = {
-                'code': specialty.code,
-                'title': specialty.title,
-                'picture': specialty.picture,
-                'amount_vacancies': Vacancy.objects.filter(specialty__code=specialty.code).count(),
-            }
-            list_of_categories.append(specialty_dict)
-
-        list_of_companies = []
-        for company in companies:
-            company_dict = {
-                'id': company.id,
-                'name': company.name,
-                'logo': company.logo,
-                'amount_vacancies': Vacancy.objects.filter(company__name=company.name).count(),
-            }
-            list_of_companies.append(company_dict)
+        specialties = Specialty.objects.all().annotate(amount_vacancies=Count('vacancies'))
+        companies = Company.objects.all().annotate(amount_vacancies=Count('vacancies'))
 
         context = {
-            'list_of_categories': list_of_categories,
-            'list_of_companies': list_of_companies,
+            'list_of_categories': specialties,
+            'list_of_companies': companies,
         }
         return render(request, 'index.html', context=context)
 
@@ -47,26 +26,7 @@ class AllVacanciesView(View):
 
     def get(self, request):
         vacancies = Vacancy.objects.select_related('company').all()
-        list_of_vacancies = []
-        for vacancy in vacancies:
-            vacancy_skills = vacancy.skills.replace(', ', ' • ')
-            published_date = datetime.strftime(vacancy.published_at, '%d %B')
-            salary_min = '{:,}'.format(vacancy.salary_min).replace(',', ' ')
-            salary_max = '{:,}'.format(vacancy.salary_max).replace(',', ' ')
-            vacancy_dict = {
-                'id': vacancy.pk,
-                'title': vacancy.title,
-                'company_logo': vacancy.company.logo,
-                'company_id': vacancy.company.id,
-                'vacancy_skills': vacancy_skills,
-                'salary_min': salary_min,
-                'salary_max': salary_max,
-                'published_date': published_date,
-            }
-            list_of_vacancies.append(vacancy_dict)
-
-        context = {'list_of_vacancies': list_of_vacancies}
-
+        context = {'list_of_vacancies': vacancies}
         return render(request, 'vacancies.html', context=context)
 
 
@@ -74,34 +34,14 @@ class VacanciesByCategoryView(View):
 
     def get(self, request, category):
         try:
-            Specialty.objects.get(code=category)
+            category_title = Specialty.objects.get(code=category).title
         except Specialty.DoesNotExist:
             raise Http404
         vacancies = Vacancy.objects.select_related('company').filter(specialty__code=category)
-        category_title = Specialty.objects.get(code=category).title
-        list_of_vacancies = []
-        for vacancy in vacancies:
-            vacancy_skills = vacancy.skills.replace(', ', ' • ')
-            published_date = datetime.strftime(vacancy.published_at, '%d %B')
-            salary_min = '{:,}'.format(vacancy.salary_min).replace(',', ' ')
-            salary_max = '{:,}'.format(vacancy.salary_max).replace(',', ' ')
-            vacancy_dict = {
-                'id': vacancy.pk,
-                'title': vacancy.title,
-                'company_logo': vacancy.company.logo,
-                'company_id': vacancy.company.id,
-                'vacancy_skills': vacancy_skills,
-                'salary_min': salary_min,
-                'salary_max': salary_max,
-                'published_date': published_date,
-            }
-            list_of_vacancies.append(vacancy_dict)
-
         context = {
-            'list_of_vacancies': list_of_vacancies,
+            'list_of_vacancies': vacancies,
             'category': category_title,
             }
-
         return render(request, 'vacancies_category.html', context=context)
 
 
@@ -113,25 +53,9 @@ class CompanyView(View):
         except Company.DoesNotExist:
             raise Http404
         vacancies = Vacancy.objects.filter(company__id=id_company)
-        list_of_vacancies = []
-        for vacancy in vacancies:
-            vacancy_skills = vacancy.skills.replace(', ', ' • ')
-            published_date = datetime.strftime(vacancy.published_at, '%d %B')
-            salary_min = '{:,}'.format(vacancy.salary_min).replace(',', ' ')
-            salary_max = '{:,}'.format(vacancy.salary_max).replace(',', ' ')
-            vacancy_dict = {
-                'id': vacancy.pk,
-                'title': vacancy.title,
-                'vacancy_skills': vacancy_skills,
-                'salary_min': salary_min,
-                'salary_max': salary_max,
-                'published_date': published_date,
-                }
-            list_of_vacancies.append(vacancy_dict)
-
         context = {
             'company': company,
-            'list_of_vacancies': list_of_vacancies,
+            'list_of_vacancies': vacancies,
         }
         return render(request, 'company.html', context=context)
 
@@ -143,17 +67,63 @@ class VacancyView(View):
             vacancy = Vacancy.objects.get(id=id_vacancy)
         except Vacancy.DoesNotExist:
             raise Http404
-        vacancy_skills = vacancy.skills.replace(', ', ' • ')
-        salary_min = '{:,}'.format(vacancy.salary_min).replace(',', ' ')
-        salary_max = '{:,}'.format(vacancy.salary_max).replace(',', ' ')
-
+        application_form = ApplicationForm()
         context = {
             'vacancy': vacancy,
-            'vacancy_skills': vacancy_skills,
-            'salary_min': salary_min,
-            'salary_max': salary_max,
+            'form': application_form,
         }
+
         return render(request, 'vacancy.html', context=context)
+
+    def post(self, request, id_vacancy):
+        application_form = ApplicationForm(request.POST)
+        if application_form.is_valid():
+            application = application_form.save(commit=False)
+            application.user = request.user
+            #vacancy = Vacancy.objects.get(id=id_vacancy)
+            application.vacancy = request.vacancy
+            application.save()
+            return HttpResponseRedirect('send')
+
+
+class SentVacancyView(View):
+
+    def get(self, request, vacancy_id):
+        return render(request, 'sent_vacancy.html')
+
+
+class MyCompanyView(View):
+
+    def get(self, request):
+        return render(request, 'my_company.html')
+
+
+class MyCompanyVacanciesView(View):
+
+    def get(self, request):
+        return render(request, 'my_company_vacancies.html')
+
+
+class MyCompanyOneVacancyView(View):
+
+    def get(self, request, vacancy_id):
+        return render(request, 'my_company_one_vacancy.html')
+
+
+class MyLoginView(LoginView):
+    form_class = LoginForm
+    redirect_authenticated_user = True
+    template_name = 'login.html'
+
+
+class RegisterView(CreateView):
+    form_class = RegisterUserForm
+    success_url = '/login/'
+    template_name = 'register.html'
+
+
+class MyLogoutView(LogoutView):
+    next_page = '/login/'
 
 
 def custom_handler404(request, exception):

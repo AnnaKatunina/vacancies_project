@@ -34,10 +34,10 @@
         {% for category in list_of_categories %}
         <div class="col-6 col-md-6 col-lg-3">
           <div class="card pt-4 text-center mb-4">
-            <img class="mx-auto d-block" src="{{ category.picture }}" width="80" height="80" alt="">
+            <img class="mx-auto d-block" src="{{ category.picture.url }}" width="80" height="80" alt="">
             <div class="card-body">
               <p class="card-text mb-2">{{ category.title }}</p>
-              <p class="card-text"><a href="/vacancies/cat/{{ category.code }}/">{{ category.amount_vacancies }} вакансий</a></p>
+              <p class="card-text"><a href="{% url 'category' category.code %}">{{ category.amount_vacancies }} вакансий</a></p>
             </div>
           </div>
         </div>
@@ -53,11 +53,11 @@
         {% for company in list_of_companies %}
         <div class="col-6 col-md-6 col-lg-3">
           <div class="card pt-4 text-center mb-4">
-            <a href="/companies/{{ company.id }}/" style="max-width: 150px;" class="mx-auto d-block">
-              <img class="mx-auto d-block mw-100" src="{{ company.logo }}" alt="">
+            <a href="{% url 'id_company' company.id %}" style="max-width: 150px;" class="mx-auto d-block">
+              <img class="mx-auto d-block mw-100" src="{{ company.logo.url }}" width="130" height="80"  alt="">
             </a>
             <div class="card-body">
-              <p class="card-text"><a href="/companies/{{ company.id }}/">{{ company.amount_vacancies }} вакансий</a></p>
+              <p class="card-text"><a href="{% url 'id_company' company.id %}">{{ company.amount_vacancies }} вакансий</a></p>
             </div>
           </div>
         </div>
