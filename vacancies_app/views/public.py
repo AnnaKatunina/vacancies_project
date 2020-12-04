@@ -1,11 +1,11 @@
 from django.contrib.auth.views import LoginView, LogoutView
-from django.db.models import Count
-from django.http import Http404, HttpResponseNotFound, HttpResponseServerError, HttpResponseRedirect
+from django.db.models import Count, Q
+from django.http import Http404, HttpResponseRedirect, HttpResponseNotFound, HttpResponseServerError
 from django.shortcuts import render
 from django.views import View
 from django.views.generic import CreateView
 
-from vacancies_app.forms import RegisterUserForm, LoginForm, ApplicationForm
+from vacancies_app.forms import ApplicationForm, LoginForm, RegisterUserForm
 from vacancies_app.models import Specialty, Company, Vacancy
 
 
@@ -80,34 +80,18 @@ class VacancyView(View):
         if application_form.is_valid():
             application = application_form.save(commit=False)
             application.user = request.user
-            #vacancy = Vacancy.objects.get(id=id_vacancy)
-            application.vacancy = request.vacancy
+            vacancy = Vacancy.objects.get(id=id_vacancy)
+            application.vacancy = vacancy
             application.save()
             return HttpResponseRedirect('send')
+
+        return render(request, 'vacancy.html', {'form': application_form})
 
 
 class SentVacancyView(View):
 
     def get(self, request, vacancy_id):
         return render(request, 'sent_vacancy.html')
-
-
-class MyCompanyView(View):
-
-    def get(self, request):
-        return render(request, 'my_company.html')
-
-
-class MyCompanyVacanciesView(View):
-
-    def get(self, request):
-        return render(request, 'my_company_vacancies.html')
-
-
-class MyCompanyOneVacancyView(View):
-
-    def get(self, request, vacancy_id):
-        return render(request, 'my_company_one_vacancy.html')
 
 
 class MyLoginView(LoginView):
@@ -123,7 +107,20 @@ class RegisterView(CreateView):
 
 
 class MyLogoutView(LogoutView):
-    next_page = '/login/'
+    next_page = '/'
+
+
+class SearchView(View):
+
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get('s')
+        search_vacancies = Vacancy.objects.filter(Q(title__icontains=query) | Q(skills__icontains=query)
+                                                  | Q(description__icontains=query))
+        context = {
+            'vacancies': search_vacancies,
+            'query': query,
+        }
+        return render(request, 'search.html', context=context)
 
 
 def custom_handler404(request, exception):
