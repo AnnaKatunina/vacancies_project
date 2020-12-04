@@ -8,8 +8,8 @@ pyflakes==2.2.0
 pytz==2020.4
 sqlparse==0.4.1
 Pillow=8.0.1
-whitenoise=5.2.0
-django-crispy-forms=1.10.0
+whitenoise~=5.2.0
+django-crispy-forms~=1.10.0
 
 
 flake8-blind-except
