@@ -13,6 +13,9 @@
       </div>
       <h1 class="h1 text-center mx-auto mt-0 pt-1" style="font-size: 70px;"><strong>{{ company.name |title }}</strong></h1>
       <p class="text-center pt-1">Компания, {{ company.location }}, {{ list_of_vacancies|length }} вакансий</p>
+      <div class="text-center mx-5" style="line-height: 1.8;">
+            {{ company.description |safe }}
+      </div>
       <div class="row mt-5">
         <div class="col-12 col-lg-8 offset-lg-2 m-auto">
 

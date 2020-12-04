@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from vacancies_app.views import custom_handler404, custom_handler500
+from vacancies_app.views.public import custom_handler404, custom_handler500
 from vacancies_project import settings
 
 urlpatterns = [

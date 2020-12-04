@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load to_and %}
+{% load salary_space %}
+{% block container %}
+
+  <main class="container mt-3">
+    <section>
+
+        <h1 class="h1 text-center mt-5 mb-4">Поиск вакансий</h1>
+
+        <div class="row">
+            <div class="col-md-7 col-lg-5 col-xl-4 col-sm-8 mx-auto">
+            <form action="{% url 'search' %}" method="get" class="form-inline sm-form mr-auto mb-4" enctype="multipart/form-data">
+
+              <input name="s" class="form-control w-100" type="text" value={{ query }} placeholder="Найти работу или стажировку" aria-label="Search">
+
+              <br>
+              <div class="pt-4 form-group col-md-6 col-sm-8 mx-auto">
+                <button class="btn btn-primary" type="submit">Найти вакансии</button>
+              </div>
+            </form>
+
+            </div>
+        </div>
+
+      {% if vacancies|length == 0 %}
+      <p class="text-center pt-1">Вакансий не найдено</p>
+      {% else %}
+      <p class="text-center pt-1">Найдено {{ vacancies|length }} вакансий</p>
+      <div class="row mt-5">
+        <div class="col-12 col-lg-8 offset-lg-2 m-auto">
+
+          {% for vacancy in vacancies %}
+          <div class="card mb-4">
+            <div class="card-body px-4">
+              <div class="row">
+                <div class="col-12 col-md-8 col-lg-9">
+                  <h2 class="h2 pb-2"><a href="{% url 'id_vacancy' vacancy.id %}" class="text-dark text-decoration-none">{{ vacancy.title}}</a></h2>
+                  <p class="mb-2">{{ vacancy.skills|to_and }}</p>
+                  <p>От {{ vacancy.salary_min|salary_space }} до {{ vacancy.salary_max|salary_space }} руб.</p>
+                  <p class="text-muted pt-1">{{ vacancy.published_at|date:'d E' }}</p>
+                </div>
+                <div class="col-12 col-md-4 col-lg-3 d-flex align-items-end">
+                  <a href="{% url 'id_company' vacancy.company.id %}"><img src="{{ vacancy.company.logo.url }}" width="130" height="80" alt=""></a>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% endif %}
+
+    </section>
+  </main>
+
+{% endblock %}
