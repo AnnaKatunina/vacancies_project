@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.utils import timezone
 
 from vacancies_project.settings import MEDIA_COMPANY_IMAGE_DIR, MEDIA_SPECIALITY_IMAGE_DIR
 
@@ -34,7 +33,7 @@ class Vacancy(models.Model):
     description = models.TextField('Описание вакансии')
     salary_min = models.IntegerField('Зарплата от')
     salary_max = models.IntegerField('Зарплата до')
-    published_at = models.DateField(default=timezone.now)
+    published_at = models.DateField(auto_now_add=True)
 
     def __str__(self):
         return f'{self.title}'

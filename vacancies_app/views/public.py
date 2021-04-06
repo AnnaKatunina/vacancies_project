@@ -2,6 +2,7 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.db.models import Count, Q
 from django.http import Http404, HttpResponseRedirect, HttpResponseNotFound, HttpResponseServerError
 from django.shortcuts import render
+from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView
 
@@ -102,7 +103,7 @@ class MyLoginView(LoginView):
 
 class RegisterView(CreateView):
     form_class = RegisterUserForm
-    success_url = '/login/'
+    success_url = reverse_lazy('login')
     template_name = 'register.html'
 
 
@@ -114,8 +115,11 @@ class SearchView(View):
 
     def get(self, request, *args, **kwargs):
         query = request.GET.get('s')
-        search_vacancies = Vacancy.objects.filter(Q(title__icontains=query) | Q(skills__icontains=query)
-                                                  | Q(description__icontains=query))
+        search_vacancies = Vacancy.objects.filter(
+            Q(title__icontains=query) |
+            Q(skills__icontains=query) |
+            Q(description__icontains=query)
+        )
         context = {
             'vacancies': search_vacancies,
             'query': query,
